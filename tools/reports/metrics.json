@@ -1,0 +1,92 @@
+{
+  "raw63": {
+    "feature_set": "raw63",
+    "temperature": 2.3176788676294513,
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "none"
+    ],
+    "in_dataset_test": {
+      "accuracy": 0.9932487725040916,
+      "macro_recall_letters_no_jz": 0.994360320824181,
+      "none_recall": 0.9792626728110599,
+      "n": 4888
+    },
+    "cross_dataset": {
+      "accuracy": 0.6695652173913044,
+      "macro_recall_letters_no_jz": 0.6668793185316173,
+      "none_recall": 0.8333333333333334,
+      "n": 805
+    }
+  },
+  "v2": {
+    "feature_set": "v2",
+    "temperature": 2.395942746913284,
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "none"
+    ],
+    "in_dataset_test": {
+      "accuracy": 0.9922258592471358,
+      "macro_recall_letters_no_jz": 0.9943675361010419,
+      "none_recall": 0.967741935483871,
+      "n": 4888
+    },
+    "cross_dataset": {
+      "accuracy": 0.737888198757764,
+      "macro_recall_letters_no_jz": 0.7309639886507703,
+      "none_recall": 0.9,
+      "n": 805
+    }
+  }
+}

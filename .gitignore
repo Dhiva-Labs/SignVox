@@ -1,0 +1,64 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Python training tools (tools/README.md explains setup)
+tools/.venv/
+tools/__pycache__/
+tools/*.pyc
+
+# v1.1 training data: downloaded public datasets and the landmark CSVs
+# extracted from them (hundreds of MB, all reproducible from
+# tools/extract_landmarks.py — see tools/DATA_LICENSES.md for the sources).
+# tools/reports/ is deliberately NOT ignored: the confusion matrices and
+# metrics.json are the evidence behind the numbers in V2_PROGRESS.md.
+tools/data/
+
+# Internal planning / handover / progress documents — working notes only,
+# not part of the released source.
+/PLAN.md
+/PLAN_V2_RECOGNITION.md
+/V2_PROGRESS.md
+.claude/

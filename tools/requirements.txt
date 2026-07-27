@@ -1,0 +1,18 @@
+numpy
+pandas
+scikit-learn
+# v1.1 (PLAN_V2_RECOGNITION.md R0): landmark extraction from public image
+# datasets. Dev-machine only — none of this ships in the app, and the app's
+# zero-network guarantee is unaffected.
+#
+# Pin note: mediapipe wheels support a bounded Python range (~3.9-3.12). If the
+# system Python is outside it, create the venv with `uv venv --python 3.12`.
+# Use the same 0.10.x line the Android side pins for tasks-vision (0.10.35), so
+# training data and runtime come from the same landmark model.
+mediapipe
+pillow
+tqdm
+# Dataset acquisition. Kaggle's public dataset metadata and download endpoints
+# both work unauthenticated for the sources used here, so no kaggle.json needed.
+huggingface_hub
+kagglehub

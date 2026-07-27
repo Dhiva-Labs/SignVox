@@ -1,0 +1,22 @@
+This folder bundles a Piper text-to-speech voice, run via the sherpa-onnx
+runtime, for SignVox's offline neural voice (PLAN.md §6.4).
+
+## Voice: en_US-ljspeech-medium (vits-piper-en_US-ljspeech-medium)
+
+Trained on the LJ Speech Dataset (Keith Ito, https://keithito.com/LJ-Speech-Dataset/),
+which is in the PUBLIC DOMAIN. See vits-piper-en_US-ljspeech-medium/MODEL_CARD.
+
+This voice was deliberately chosen over other available Piper voices (e.g.
+en_US-lessac-medium) specifically because its training data has no usage
+restrictions — some other Piper voices are trained on datasets (e.g. the
+Lessac Blizzard 2013 corpus) whose license explicitly forbids commercial
+use or redistribution in a shipped product. Do not substitute a different
+bundled voice without checking its MODEL_CARD's dataset license first.
+
+## Piper (voice architecture / training toolkit)
+
+https://github.com/rhasspy/piper — MIT License.
+
+## sherpa-onnx (on-device inference runtime used to run this voice)
+
+https://github.com/k2-fsa/sherpa-onnx — Apache License 2.0.

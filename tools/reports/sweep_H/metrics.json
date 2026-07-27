@@ -1,0 +1,47 @@
+{
+  "v2": {
+    "feature_set": "v2",
+    "temperature": 1.9962977759282021,
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      "none"
+    ],
+    "in_dataset_test": {
+      "accuracy": 0.9926350245499181,
+      "macro_recall_letters_no_jz": 0.995847606669483,
+      "none_recall": 0.956221198156682,
+      "n": 4888
+    },
+    "cross_dataset": {
+      "accuracy": 0.7788819875776397,
+      "macro_recall_letters_no_jz": 0.7611791199434877,
+      "none_recall": 0.85,
+      "n": 805
+    }
+  }
+}
