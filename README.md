@@ -24,6 +24,7 @@ Sign language is often used in exactly the situations where sending video or aud
 
 - **Spell mode** — fingerspell words letter by letter; a small on-device model recognizes each handshape and speaks committed words as you go. A live candidate bar shows the top three guesses with a progress ring on the letter that's about to commit.
 - **Word suggestions** — after a letter or two, one-tap chips complete the whole word from an offline English frequency list, so a conversation doesn't wait for every letter to be spelled.
+- **Auto-correction** — a spelled word that ends up one letter off a common English word (HELLN) is repaired before it's spoken. One confused handshape no longer ruins the word. Toggleable in Settings.
 - **Personalised recognition** — optionally teach the app *your* hand, letter by letter. It stores a compact per-letter fingerprint on the device (never the images, never uploaded) and blends it into recognition, so one global model doesn't have to fit every hand.
 - **Signs mode** — teach SignVox your own two-handed signs (5 quick samples each) and it recognizes and speaks them live, using dynamic time warping — no training pipeline, no dataset licensing risk, your signs stay your own data.
 - **Conversation mode** — a split view: a live on-device speech-to-text transcript of the person you're talking to on top, your signing below, plus one-tap quick phrases.
@@ -39,7 +40,7 @@ Sign language is often used in exactly the situations where sending video or aud
 | App framework | Flutter (Android only), Riverpod for shared state |
 | Design system | Apple-HIG grammar in Material: Inter typeface (OFL 1.1), iOS semantic palette, frosted glass, Cupertino transitions/dialogs/switches (`lib/theme.dart` + `lib/ui/widgets/`) |
 | Camera + hand tracking | CameraX + MediaPipe Tasks HandLandmarker (Kotlin, GPU→CPU fallback) |
-| Letter recognition | Small MLP (135→256→128→27), pure-Dart inference, trained on permissively-licensed public ASL photo datasets + optional on-device personalisation |
+| Letter recognition | Ensemble of five small MLPs (135→256→128→27, independently seeded and calibrated, probabilities averaged), pure-Dart inference, trained on permissively-licensed public ASL photo datasets + optional on-device personalisation |
 | Sign recognition | Dynamic time warping (DTW) + 1-NN over user-taught exemplars |
 | Voice | sherpa-onnx running a bundled Piper voice (`en_US-ljspeech-medium`), `flutter_tts` as a loading/failure fallback |
 | Speech-to-text | `speech_to_text`, gated to on-device-only recognition (see [Privacy](#privacy)) |
@@ -106,7 +107,7 @@ in-dataset score alone would flatter the model considerably.
 
 Built and verified phase-by-phase (P0–P7) on an Android emulator with a host-webcam passthrough for the front camera. Honestly still pending, because they need real hardware or a real recorded dataset:
 
-- Recognition-accuracy numbers against an actual signing hand, on an actual device. The bundled model is now trained on real public-dataset hands (v1.1 replaced the synthetic placeholder weights), and scores 99.3% held-out in-dataset / 78.9% on a fully unseen source — but a photo dataset is not a person signing at a phone, and only a device test can say what that translates to.
+- Recognition-accuracy numbers against an actual signing hand, on an actual device. The bundled model is trained on real public-dataset hands and ships as a five-member ensemble: on a fully unseen source, individual seeds ranged 69–76% (the public eval set is small enough that single numbers carry ±2–3 points of noise) while the ensemble locks in above-the-seed-mean accuracy with the strongest phantom-letter rejection measured so far. In-dataset held-out accuracy is 99.3%. A photo dataset is not a person signing at a phone — the intended accuracy path is per-user: the Improve Recognition calibration flow, and eventually a Data Lab-recorded dataset.
 - Whether the on-device personalisation flow measurably helps a real user's weak letters.
 - Real-device latency/FPS numbers and adaptive-frame-rate behavior under real thermal throttling.
 - Conversation mode's live transcript, end-to-end, on a device with the on-device speech model installed (Android 12+).

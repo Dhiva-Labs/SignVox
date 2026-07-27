@@ -221,6 +221,12 @@ def logits(model: MLPClassifier, X: np.ndarray) -> np.ndarray:
     return a
 
 
+def softmax_rows(z: np.ndarray) -> np.ndarray:
+    s = z - z.max(axis=1, keepdims=True)
+    e = np.exp(s)
+    return e / e.sum(axis=1, keepdims=True)
+
+
 def fit_temperature(z: np.ndarray, y_idx: np.ndarray) -> float:
     """Scalar T minimising NLL of softmax(z/T). Grid + local refine — no scipy
     dependency needed for a smooth 1-D problem this small."""
@@ -244,8 +250,7 @@ def fit_temperature(z: np.ndarray, y_idx: np.ndarray) -> float:
     return float((lo + hi) / 2)
 
 
-def export_weights_json(model: MLPClassifier, labels: list[str], out_path: Path,
-                        feature_set: str, temperature: float, meta: dict) -> None:
+def _layers_json(model: MLPClassifier, temperature: float) -> list[dict]:
     layers = []
     n_layers = len(model.coefs_)
     for i, (coef, intercept) in enumerate(zip(model.coefs_, model.intercepts_)):
@@ -265,13 +270,32 @@ def export_weights_json(model: MLPClassifier, labels: list[str], out_path: Path,
                 "activation": activation,
             }
         )
-    payload = {
-        "labels": labels,
-        "layers": layers,
-        # Absent == v1/raw-63, so old weight files keep loading unchanged.
-        "featureSet": feature_set,
-        "temperature": round(float(temperature), 6),
-    }
+    return layers
+
+
+def export_weights_json(members: list[tuple[MLPClassifier, float]], labels: list[str],
+                        out_path: Path, feature_set: str, meta: dict) -> None:
+    """One member -> the legacy single-model shape (older readers keep working);
+    several -> {"models": [{"layers": ...}, ...]} with each member's calibration
+    baked into its own output layer, so on-device inference is just
+    mean(softmax_i) — v1.2's accuracy lever, since averaging independently
+    seeded, independently calibrated networks beats any one of them."""
+    if len(members) == 1:
+        model, temperature = members[0]
+        payload = {
+            "labels": labels,
+            "layers": _layers_json(model, temperature),
+            # Absent == v1/raw-63, so old weight files keep loading unchanged.
+            "featureSet": feature_set,
+            "temperature": round(float(temperature), 6),
+        }
+    else:
+        payload = {
+            "labels": labels,
+            "models": [{"layers": _layers_json(m, t)} for m, t in members],
+            "featureSet": feature_set,
+            "ensemble": len(members),
+        }
     payload.update(meta)
     out_path.write_text(json.dumps(payload))
 
@@ -302,32 +326,48 @@ def run(feature_set: str, splits: dict, args, rng: np.random.Generator, report_d
     X_va = to_features(X_va63, feature_set)
     X_te = to_features(X_te63, feature_set)
 
-    print(f"\n=== {feature_set}: train {X_tr.shape}, val {X_va.shape}, test {X_te.shape} ===")
-    model = MLPClassifier(
-        hidden_layer_sizes=tuple(args.hidden),
-        activation="relu",
-        solver="adam",
-        max_iter=args.max_iter,
-        early_stopping=True,
-        n_iter_no_change=12,
-        random_state=args.seed,
-    )
-    model.fit(X_tr, y_tr)
-    labels = list(model.classes_)
-    idx_of = {lab: i for i, lab in enumerate(labels)}
+    n_members = max(1, args.ensemble)
+    print(f"\n=== {feature_set}: train {X_tr.shape}, val {X_va.shape}, "
+          f"test {X_te.shape}, ensemble of {n_members} ===")
+    members: list[tuple[MLPClassifier, float]] = []
+    for k in range(n_members):
+        model = MLPClassifier(
+            hidden_layer_sizes=tuple(args.hidden),
+            activation="relu",
+            solver="adam",
+            max_iter=args.max_iter,
+            early_stopping=True,
+            n_iter_no_change=12,
+            random_state=args.seed + k,
+        )
+        model.fit(X_tr, y_tr)
+        temperature = 1.0
+        if args.calibrate:
+            member_idx = {lab: i for i, lab in enumerate(model.classes_)}
+            z_va = logits(model, X_va)
+            temperature = fit_temperature(z_va, np.array([member_idx[v] for v in y_va]))
+        print(f"member {k}: T = {temperature:.4f}")
+        members.append((model, temperature))
 
-    temperature = 1.0
-    if args.calibrate:
-        z_va = logits(model, X_va)
-        temperature = fit_temperature(z_va, np.array([idx_of[v] for v in y_va]))
-        print(f"calibration temperature T = {temperature:.4f}")
+    # sklearn sorts classes_, and every member saw the same label set, so the
+    # output ordering is identical across members — averaging is positionwise.
+    labels = list(members[0][0].classes_)
+    label_arr = np.array(labels)
 
-    results = {"feature_set": feature_set, "temperature": temperature, "labels": labels}
+    def ens_proba(X: np.ndarray) -> np.ndarray:
+        return np.mean([softmax_rows(logits(m, X) / t) for m, t in members], axis=0)
+
+    results = {
+        "feature_set": feature_set,
+        "ensemble": n_members,
+        "temperatures": [round(float(t), 4) for _, t in members],
+        "labels": labels,
+    }
 
     def evaluate(name: str, X, y_true):
         if X is None or len(X) == 0:
             return None
-        y_pred = model.predict(X)
+        y_pred = label_arr[np.argmax(ens_proba(X), axis=1)]
         rep = classification_report(y_true, y_pred, zero_division=0, output_dict=True)
         letters_only = [k for k in rep if len(k) == 1 and k.isalpha()]
         no_jz = [k for k in letters_only if k not in ("J", "Z")]
@@ -355,7 +395,7 @@ def run(feature_set: str, splits: dict, args, rng: np.random.Generator, report_d
         X_cr63, y_cr = splits["cross"]
         evaluate("cross_dataset", to_features(X_cr63, feature_set), y_cr)
 
-    return model, labels, temperature, results
+    return members, labels, results
 
 
 def main() -> None:
@@ -384,6 +424,8 @@ def main() -> None:
     parser.add_argument("--none-oversample", type=int, default=2,
                         help="Extra copies of none rows in the training split")
     parser.add_argument("--hidden", type=int, nargs="+", default=[256, 128])
+    parser.add_argument("--ensemble", type=int, default=1,
+                        help="Members trained on seeds seed..seed+N-1; probabilities averaged")
     parser.add_argument("--max-iter", type=int, default=400)
     parser.add_argument("--no-calibrate", dest="calibrate", action="store_false")
     parser.add_argument("--test-size", type=float, default=0.15)
@@ -438,8 +480,8 @@ def main() -> None:
     all_results = {}
     trained = {}
     for fs in configs:
-        model, labels, temperature, results = run(fs, splits, args, np.random.default_rng(args.seed), args.report_dir)
-        trained[fs] = (model, labels, temperature)
+        members, labels, results = run(fs, splits, args, np.random.default_rng(args.seed), args.report_dir)
+        trained[fs] = (members, labels)
         all_results[fs] = results
 
     def score(fs: str) -> float:
@@ -448,11 +490,11 @@ def main() -> None:
         return cross["accuracy"] if cross else r["in_dataset_test"]["accuracy"]
 
     winner = max(configs, key=score)
-    model, labels, temperature = trained[winner]
+    members, labels = trained[winner]
     print(f"\n>>> shipping feature set: {winner}")
 
     export_weights_json(
-        model, labels, args.out, winner, temperature if args.calibrate else 0.0,
+        members, labels, args.out, winner,
         meta={
             "trainedOn": [d.name for d in args.data_dir],
             "crossDatasetEval": args.eval_dir.name if args.eval_dir else None,

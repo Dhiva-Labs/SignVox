@@ -93,6 +93,18 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       SvSwitchRow(
                         leading: const IconBadge(
+                          CupertinoIcons.textformat,
+                          color: BadgeColors.green,
+                        ),
+                        title: 'Auto-Correct Words',
+                        subtitle:
+                            'Fix a spelled word that’s one letter off a common one',
+                        value: s.autocorrectEnabled,
+                        onChanged: (v) =>
+                            set((c) => c.copyWith(autocorrectEnabled: v)),
+                      ),
+                      SvSwitchRow(
+                        leading: const IconBadge(
                           CupertinoIcons.person_crop_circle,
                           color: BadgeColors.purple,
                         ),

@@ -111,7 +111,7 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
         decoder: SpellDecoder(
           holdDuration: Duration(milliseconds: initialSettings.letterHoldMs),
         ),
-      );
+      )..autocorrect = initialSettings.autocorrectEnabled;
       spell.letterEngine.prototypes = await loadUserPrototypes()
         ..enabled = initialSettings.personalisationEnabled;
       final signs = SignsController(
@@ -132,6 +132,7 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
         spell.decoder.holdDuration = Duration(milliseconds: s.letterHoldMs);
         spell.letterEngine.prototypes?.enabled = s.personalisationEnabled;
         spell.speakPerWord = s.speakPerWord;
+        spell.autocorrect = s.autocorrectEnabled;
         signs.dominantIsLeft = s.leftHandedMode;
         signs.speakPerWord = s.speakPerWord;
         tts.setRate(s.ttsRate);

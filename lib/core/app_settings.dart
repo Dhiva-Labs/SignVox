@@ -18,6 +18,7 @@ class AppSettingsData {
     required this.keepScreenOnWhileTranslating,
     required this.showOverlayByDefault,
     required this.personalisationEnabled,
+    required this.autocorrectEnabled,
   });
 
   final ThemeMode themeMode;
@@ -59,6 +60,11 @@ class AppSettingsData {
   /// prototypes are blended into the letter model's predictions.
   final bool personalisationEnabled;
 
+  /// v1.2: repair a committed word that is one edit away from a common
+  /// English word (HELLN -> HELLO) before it is spoken. Word-level insurance
+  /// against a single confused letter.
+  final bool autocorrectEnabled;
+
   static const defaults = AppSettingsData(
     themeMode: ThemeMode.system,
     ttsRate: 1.0,
@@ -69,6 +75,7 @@ class AppSettingsData {
     keepScreenOnWhileTranslating: false,
     showOverlayByDefault: true,
     personalisationEnabled: true,
+    autocorrectEnabled: true,
   );
 
   AppSettingsData copyWith({
@@ -81,6 +88,7 @@ class AppSettingsData {
     bool? keepScreenOnWhileTranslating,
     bool? showOverlayByDefault,
     bool? personalisationEnabled,
+    bool? autocorrectEnabled,
   }) {
     return AppSettingsData(
       themeMode: themeMode ?? this.themeMode,
@@ -94,6 +102,7 @@ class AppSettingsData {
       showOverlayByDefault: showOverlayByDefault ?? this.showOverlayByDefault,
       personalisationEnabled:
           personalisationEnabled ?? this.personalisationEnabled,
+      autocorrectEnabled: autocorrectEnabled ?? this.autocorrectEnabled,
     );
   }
 
@@ -107,6 +116,7 @@ class AppSettingsData {
     'keepScreenOnWhileTranslating': keepScreenOnWhileTranslating,
     'showOverlayByDefault': showOverlayByDefault,
     'personalisationEnabled': personalisationEnabled,
+    'autocorrectEnabled': autocorrectEnabled,
   };
 
   factory AppSettingsData.fromJson(Map<String, dynamic> json) {
@@ -135,6 +145,8 @@ class AppSettingsData {
           json['showOverlayByDefault'] as bool? ?? d.showOverlayByDefault,
       personalisationEnabled:
           json['personalisationEnabled'] as bool? ?? d.personalisationEnabled,
+      autocorrectEnabled:
+          json['autocorrectEnabled'] as bool? ?? d.autocorrectEnabled,
     );
   }
 }

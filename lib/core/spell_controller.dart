@@ -60,6 +60,11 @@ class SpellController {
   /// auto-speak one at a time (PLAN.md §4 screen 7). Mutable, same reason.
   bool speakPerWord;
 
+  /// v1.2: repair a pause/space-committed word that is one edit from a common
+  /// English word before it is spoken (needs [suggester]). Mutable so Settings
+  /// can flip it live.
+  bool autocorrect = true;
+
   final ValueNotifier<SpellState> state = ValueNotifier(SpellState.empty);
   final List<String> _sentence = [];
   final Float32List _normalized = Float32List(63);
@@ -94,8 +99,9 @@ class SpellController {
     );
 
     if (result.committedWord != null) {
-      _sentence.add(result.committedWord!);
-      if (speakPerWord) tts.speak(result.committedWord!);
+      final word = _finalizeWord(result.committedWord!);
+      _sentence.add(word);
+      if (speakPerWord) tts.speak(word);
     }
     // Publish every frame now, not only on commits: the hold ring and the
     // candidate bar are live indicators and would otherwise sit frozen between
@@ -139,10 +145,18 @@ class SpellController {
   /// had happened — lets the next letters start a fresh word on demand.
   void addSpace() {
     if (decoder.currentWord.isEmpty) return;
-    _sentence.add(decoder.currentWord);
+    _sentence.add(_finalizeWord(decoder.currentWord));
     decoder.reset();
     smoother.reset();
     _publish();
+  }
+
+  /// Applies word-level auto-correction (when enabled) to a spelled word at
+  /// the moment it leaves the compose line. Suggestion taps skip this — those
+  /// words come straight from the dictionary.
+  String _finalizeWord(String word) {
+    if (!autocorrect) return word;
+    return suggester?.correct(word) ?? word;
   }
 
   /// Commits a tapped suggestion as the whole word — replaces whatever was
