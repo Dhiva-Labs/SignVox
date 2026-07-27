@@ -12,6 +12,7 @@ import '../../core/signs_controller.dart';
 import '../../core/spell_controller.dart';
 import '../../core/vision_channel.dart';
 import '../../engines/decoder.dart';
+import '../../engines/digit_engine.dart';
 import '../../engines/letter_engine.dart';
 import '../../engines/word_suggester.dart';
 import '../../speech/stt_service.dart';
@@ -26,7 +27,7 @@ import 'sentence_strip.dart';
 import 'signs_strip.dart';
 import 'vision_hud.dart';
 
-enum TranslateMode { spell, signs }
+enum TranslateMode { spell, numbers, signs }
 
 class TranslateScreen extends ConsumerStatefulWidget {
   const TranslateScreen({super.key});
@@ -106,6 +107,7 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
         tts: tts,
         history: history,
         suggester: suggester,
+        digitEngine: DigitEngine(),
         leftHandedMode: initialSettings.leftHandedMode,
         speakPerWord: initialSettings.speakPerWord,
         decoder: SpellDecoder(
@@ -149,6 +151,7 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
         if (f == null) return;
         switch (_mode) {
           case TranslateMode.spell:
+          case TranslateMode.numbers:
             spell.onFrame(f);
           case TranslateMode.signs:
             signs.onFrame(f);
@@ -294,13 +297,13 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
 
   Widget _strip(SpellController spell, SignsController signs) {
     return switch (_mode) {
-      TranslateMode.spell => SentenceStrip(
+      TranslateMode.spell || TranslateMode.numbers => SentenceStrip(
         state: spell.state,
         onSpeakAll: spell.speakAll,
         onBackspace: spell.backspace,
         onAddSpace: spell.addSpace,
         onClear: spell.clear,
-        onSuggestion: spell.acceptSuggestion,
+        onSuggestion: _mode == TranslateMode.spell ? spell.acceptSuggestion : null,
       ),
       TranslateMode.signs => SignsStrip(
         state: signs.state,
@@ -370,13 +373,17 @@ class _TranslateScreenState extends ConsumerState<TranslateScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 192,
+                width: 258,
                 child: SvSegmented<TranslateMode>(
                   onDark: true,
                   value: _mode,
-                  onChanged: (m) => setState(() => _mode = m),
+                  onChanged: (m) => setState(() {
+                    _mode = m;
+                    _spellController?.setDigitsMode(m == TranslateMode.numbers);
+                  }),
                   segments: const [
-                    (TranslateMode.spell, 'Spell'),
+                    (TranslateMode.spell, 'ABC'),
+                    (TranslateMode.numbers, '123'),
                     (TranslateMode.signs, 'Signs'),
                   ],
                 ),

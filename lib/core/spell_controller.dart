@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/history_repository.dart';
 import '../engines/decoder.dart';
+import '../engines/digit_engine.dart';
 import '../engines/letter_engine.dart';
 import '../engines/prob_smoother.dart';
 import '../engines/word_suggester.dart';
@@ -27,6 +28,7 @@ class SpellController {
     required this.tts,
     this.history,
     this.suggester,
+    this.digitEngine,
     this.leftHandedMode = false,
     this.speakPerWord = true,
     SpellDecoder? decoder,
@@ -46,6 +48,25 @@ class SpellController {
 
   /// Optional word completion for the suggestion chips; null = feature off.
   final WordSuggester? suggester;
+
+  /// v1.3: rule-based 0-9 recognizer for Numbers mode; null = mode unavailable.
+  final DigitEngine? digitEngine;
+
+  bool _digitsMode = false;
+
+  /// True while the UI's ABC/123 switch is on 123 — the frame pipeline then
+  /// classifies digits (geometry + letter-ensemble blend for the shapes ASL
+  /// shares between digits and letters) instead of letters.
+  bool get digitsMode => _digitsMode;
+
+  void setDigitsMode(bool enabled) {
+    if (_digitsMode == enabled || (enabled && digitEngine == null)) return;
+    _digitsMode = enabled;
+    // The class vector changes size/meaning; carrying an EMA across would
+    // blend letter mass into digit slots.
+    smoother.reset();
+    _publish();
+  }
 
   /// MediaPipe hand score below which the frame is treated as no-hand
   /// (PLAN_V2_RECOGNITION.md R3 step 6). A barely-tracked hand produces
@@ -84,8 +105,20 @@ class SpellController {
     if (hand != null) {
       normalizeHand(hand, out: _normalized);
       transitioning = velocityGate.addFrame(_normalized);
-      final smoothed = smoother.add(letterEngine.probabilities(_normalized));
-      prediction = letterEngine.topOf(smoothed);
+      final letterProbs = letterEngine.probabilities(_normalized);
+      final digits = _digitsMode ? digitEngine : null;
+      if (digits != null) {
+        final smoothed = smoother.add(
+          digits.probabilities(
+            _normalized,
+            letterProbs: letterProbs,
+            letterLabels: letterEngine.labels,
+          ),
+        );
+        prediction = digits.topOf(smoothed);
+      } else {
+        prediction = letterEngine.topOf(smoother.add(letterProbs));
+      }
       candidates = _candidatesOf(prediction);
     } else {
       smoother.reset();
