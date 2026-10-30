@@ -112,3 +112,15 @@ Built and verified phase-by-phase (P0–P7) on an Android emulator with a host-w
 - Whether the on-device personalisation flow measurably helps a real user's weak letters.
 - Real-device latency/FPS numbers and adaptive-frame-rate behavior under real thermal throttling.
 - Conversation mode's live transcript, end-to-end, on a device with the on-device speech model installed (Android 12+).
+
+## Sponsors
+
+Dhiva Labs is an independent, self-funded lab. [Sponsorships](https://github.com/sponsors/Dhiva-Labs) help bring this project and the rest of Dhiva Labs to every platform, iPhone and Mac included.
+
+[![Sponsor Dhiva Labs](https://img.shields.io/badge/Sponsor-Dhiva%20Labs-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Dhiva-Labs)
+
+Monthly sponsors at $10 and up are listed here:
+
+<!-- sponsors -->
+*Be the first: [sponsor Dhiva Labs](https://github.com/sponsors/Dhiva-Labs).*
+<!-- sponsors -->
