@@ -2,6 +2,8 @@
 
 **Sign at your phone's front camera — it speaks for you, out loud, in a natural voice. Entirely offline.**
 
+**Documentation:** step-by-step guides at [learn.dhivalabs.com](https://learn.dhivalabs.com/apps/signvox/): [install](https://learn.dhivalabs.com/apps/signvox/install) · [beginner guide](https://learn.dhivalabs.com/apps/signvox/getting-started) · [troubleshooting](https://learn.dhivalabs.com/apps/signvox/faq). New to the topic? Try the [AI and local models](https://learn.dhivalabs.com/tracks/ai/) learning track.
+
 SignVox is an Android app for anyone who signs and wants to be understood by someone who doesn't. Spell words letter by letter, or teach it your own signs, and it speaks them back immediately in a bundled neural voice — no internet connection, ever. It also has a Conversation mode with a live, on-device speech-to-text transcript of the other side of the exchange.
 
 Built for [Dhiva Labs](https://github.com/Dhiva-Labs).
